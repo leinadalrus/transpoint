@@ -2,7 +2,7 @@ import { onMounted, ref, watch } from 'vue'
 import type { IBeyInfo } from '@/models/IBeyInfo'
 import type { IBeyData } from '@/models/IBeyData'
 
-interface IBeyJson {
+interface IJsonDatum {
     key: string
     value: string
 }
@@ -10,7 +10,7 @@ interface IBeyJson {
 const beywatches = ref<IBeyInfo[]>([])
 const BEYDEX_KEYNAME = 'beigomas'
 
-async function cacheTradingCards(): Promise<IBeyJson> {
+async function cacheTradeItems() {
     return {
         key: BEYDEX_KEYNAME,
         value: JSON.stringify(beywatches.value)
@@ -30,8 +30,8 @@ const convertBlobToBase64 = (blob: Blob) => {
     })
 }
 
-const loadSavedAsync = async (dataHeader: string) => {
-    const tradingList = await cacheTradingCards()
+const loadSavedAsync = async (dataHeader: IJsonDatum) => {
+    const tradingList = await cacheTradeItems()
     const tradesInPreferences = tradingList.value
         ? JSON.parse(tradingList.value)
         : []
@@ -48,17 +48,11 @@ const loadSavedAsync = async (dataHeader: string) => {
 
 export const saveTradeAsync = async (
     trade: IBeyInfo,
-    filenamePath: string
-): Promise<IBeyInfo> => {
+    filenamePath: string 
+) => {
     const response = await fetch(trade.webviewPath!)
     const blob = await response.blob()
-    const beyData = convertBlobToBase64(blob) as unknown as IBeyData
-    const base64Data = convertBlobToBase64(blob) as unknown as string
-
-    const savedTrade = {
-        path: filenamePath,
-        data: base64Data
-    }
+    const beyData = convertBlobToBase64(blob)
 
     return {
         id: 0,
@@ -74,11 +68,11 @@ export const useStoreGallery = () => {
     onMounted(loadSavedAsync)
 
     const save = async (name: string) => {
-        const trade = await cacheTradingCards()
+        const trade = await cacheTradeItems()
         if (trade.key != name) return null
         return trade.key
     }
     return save
 }
 
-watch(beywatches, cacheTradingCards)
+watch(beywatches, cacheTradeItems)
